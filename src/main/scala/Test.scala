@@ -8,6 +8,7 @@ object Test{
 		val spark = SparkSession
 				.builder
 				.master("local")
+				.config("spark.sql.shuffle.partitions", "4")
 				.appName("StructuredNetworkWordCount")
 				.getOrCreate()
 
@@ -22,7 +23,7 @@ object Test{
 				.load()
 
 				val rdd =   lines.as[String]
-						val rdd_2 = rdd.flatMap(x => x.split(","))
+						val rdd_2 = rdd.map(x => x.split(","))
 
 						//val rdd_person = rdd.as[Person]
 
@@ -39,12 +40,12 @@ object Test{
 						
 						
 						//val userDS = newDs.map(x => Person(x._1,x._2))
-						val userDS = rdd_2.map(x => Person(x(0).toString(),x(1).toInt))
+						val userDS = rdd_2.map(x => Person(x(0).toInt,x(1).toString(),x(2).toInt))
 						//.asInstanceOf[Users]
-						userDS.show()
+						//userDS.show()
 
 						val table = userDS.createOrReplaceTempView("person")
-						spark.sqlContext.cacheTable("person")
+						//spark.sqlContext.cacheTable("person")
 
 						
 
@@ -53,9 +54,9 @@ object Test{
 
 						
 
-						
 
-						val last = spark.sql("select * from person")
+
+						val last = spark.sql("select id,max(age) from person group by id")
 						
 						val query = last.writeStream
 						.outputMode("complete")
@@ -85,5 +86,5 @@ object Test{
 						query.awaitTermination()*/
 	}
 
-case class Person(val name:String,val age:Int)
+case class Person(val id:Int,val name:String,val age:Int)
 }
